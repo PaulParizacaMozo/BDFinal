@@ -1145,27 +1145,37 @@ public:
   //ARBOL B+---------------------------------------------------------
   void crearTablaBPLus(string tabla){
     this->diskController->tableToVector();
-    string w1;
-    int inicializador = 0;
-    fstream dictionary("dictionary/dictionary.bin", ios::in | ios::out | ios::binary);
-    // Aumenta el numero de tablas
-    int nTablas;
-    dictionary.seekg(8);
-    dictionary.read(reinterpret_cast<char *>(&nTablas), sizeof(int));
-    dictionary.seekp(8);
-    cout << "tablas-> " << nTablas << endl;
-    nTablas++;
-    dictionary.write(reinterpret_cast<char *>(&nTablas), sizeof(int));
-    cout << "tablas-> " << nTablas << endl;
-    dictionary.seekp(0, ios::end);
-    w1 = "BPLUS"+this->diskController->nameTable;
-    w1.resize(100, ' ');
-    dictionary.write(w1.c_str(), w1.length());
-    dictionary.write(reinterpret_cast<char *>(&inicializador), sizeof(int));
-    dictionary.write(reinterpret_cast<char *>(&inicializador), sizeof(int));
-    dictionary.write(reinterpret_cast<char *>(&inicializador), sizeof(int));
-    dictionary.write(reinterpret_cast<char *>(&inicializador), sizeof(int));
-    dictionary.close();
+    int existe =this->diskController->buscarTablaenDictionary("BPLUS"+tabla);
+    if(existe == 0){
+      string w1;
+      int inicializador = 0;
+        int inicio;
+        fstream dict("dictionary/dictionary.bin", ios::in | ios::out | std::ios::binary);
+        dict.seekg(4);
+        dict.read(reinterpret_cast<char *>(&inicio), sizeof(int));
+        inicio++;
+        dict.close();
+
+      fstream dictionary("dictionary/dictionary.bin", ios::in | ios::out | ios::binary);
+      // Aumenta el numero de tablas
+      int nTablas;
+      dictionary.seekg(8);
+      dictionary.read(reinterpret_cast<char *>(&nTablas), sizeof(int));
+      dictionary.seekp(8);
+      cout << "tablas-> " << nTablas << endl;
+      nTablas++;
+      dictionary.write(reinterpret_cast<char *>(&nTablas), sizeof(int));
+      cout << "tablas-> " << nTablas << endl;
+      dictionary.seekp(0, ios::end);
+      w1 = "BPLUS"+this->diskController->nameTable;
+      w1.resize(100, ' ');
+      dictionary.write(w1.c_str(), w1.length());
+      dictionary.write(reinterpret_cast<char *>(&inicializador), sizeof(int));
+      dictionary.write(reinterpret_cast<char *>(&inicio), sizeof(int));
+      dictionary.write(reinterpret_cast<char *>(&inicializador), sizeof(int));
+      dictionary.write(reinterpret_cast<char *>(&inicializador), sizeof(int));
+      dictionary.close();
+    }
   }
 
 
@@ -1184,10 +1194,12 @@ public:
     int inicio;
     int posicion = this->diskController->buscarTablaenDictionary(this->diskController->nameTable);
     posicion += 104;
+    int posTablaB = this->diskController->buscarTablaenDictionary("BPLUS"+this->diskController->nameTable);
+    posTablaB += 104;
     fstream dictionary("dictionary/dictionary.bin", ios::in | ios::out | std::ios::binary);
-    dictionary.seekg(4);
+    //Cambios
+    dictionary.seekg(posTablaB);
     dictionary.read(reinterpret_cast<char *>(&inicio), sizeof(int));
-    inicio++;
     dictionary.seekg(posicion);
     dictionary.read(reinterpret_cast<char *>(&bloqueInicial), sizeof(int));
     dictionary.read(reinterpret_cast<char *>(&bloqueFinal), sizeof(int));
@@ -1242,7 +1254,7 @@ public:
               comprobarEspacio = 0;
               int pru;
               int a = 0;
-              cout<<"AQUi---------------------------------------------------------------------------------------------------------------------\n"<<frame2<<endl;
+              cout<<"BLOQUE LLENO---------------------------------------------------------------------------------------------------------------------\n"<<frame2<<endl;
               for(int as = 0; as<5;as++){
                 pru = *reinterpret_cast<int *>(frame2+a);
                 cout<<pru<<" - ";
@@ -1274,20 +1286,16 @@ public:
     }
     //Dictionary
 
-    int bloqueInit;
     int pos = this->diskController->buscarTablaenDictionary("BPLUS"+this->diskController->nameTable);
     pos += 100;
     fstream dic("dictionary/dictionary.bin", ios::in | ios::out | std::ios::binary);
-    dic.seekg(4);
-    dic.read(reinterpret_cast<char *>(&bloqueInit), sizeof(int));
-    bloqueInit++;
     dic.seekp(4);
     dic.write(reinterpret_cast<char *>(&inicio), sizeof(int));
     dic.seekp(pos);
     dic.write(reinterpret_cast<char *>(&numRegistros), sizeof(int));
-    dic.write(reinterpret_cast<char *>(&bloqueInit), sizeof(int));
-    bloqueInit = inicio;
-    dic.write(reinterpret_cast<char *>(&bloqueInit), sizeof(int));
+    pos += 8;
+    dic.seekp(pos);
+    dic.write(reinterpret_cast<char *>(&inicio), sizeof(int));
     dic.close();
 
   }
@@ -1340,7 +1348,7 @@ public:
     if(data.first != -1){
       char *frame = bufferManager->getPageOfBuuferPool(data.first)->data;
       int byte = data.second;
-      cout<<"Informacion del registro\n";
+      cout<<"\nInformacion del registro\n\n";
       for (auto &i : this->diskController->info)
             {
               if (get<1>(i) == "int")
@@ -1391,31 +1399,29 @@ public:
           int free = get_integer(frame, sustiByte + aux, 0);
           if (free == 0)
           {
-            // cout<<"ingresa = 0"<<endl;
-            // cout<<"reemplaza "<<sustiByte+aux<<"-> "<<byte-sizeRegistro;
             *reinterpret_cast<int *>(&frame[sustiByte + aux]) = byte - sizeRegistro;
             *reinterpret_cast<int *>(&frame[byte - 4]) = 0;
             bufferManager->PinFrame(data.first);
-              tree.remove(objetivo);
               int numRegistros;
               int posicion = this->diskController->buscarTablaenDictionary("BPLUS"+this->diskController->nameTable);
               posicion += 100;
               fstream dictionary("dictionary/dictionary.bin", ios::in | ios::out | std::ios::binary);
               dictionary.seekg(posicion);
-              dictionary.seekp(posicion);
               dictionary.read(reinterpret_cast<char *>(&numRegistros), sizeof(int));
               numRegistros--;
+              dictionary.seekp(posicion);
               dictionary.write(reinterpret_cast<char *>(&numRegistros), sizeof(int));
               dictionary.close();
               posicion = this->diskController->buscarTablaenDictionary(this->diskController->nameTable);
               posicion += 100;
               fstream dictionary1("dictionary/dictionary.bin", ios::in | ios::out | std::ios::binary);
               dictionary1.seekg(posicion);
-              dictionary1.seekp(posicion);
               dictionary1.read(reinterpret_cast<char *>(&numRegistros), sizeof(int));
               numRegistros--;
+              dictionary1.seekp(posicion);
               dictionary1.write(reinterpret_cast<char *>(&numRegistros), sizeof(int));
               dictionary1.close();
+              tree.remove(objetivo);
             return;
           }
           else

@@ -214,21 +214,21 @@ int main(){
             }
             else if (opc4 == 4) {
                 int aux;
-                cout<<" Ingrese el elemento que desea buscar";
+                cout<<" Ingrese el elemento que desea buscar: ";
                 cin>>aux;
                 cin.ignore();
                 sistema.buscarElemento(aux);
             }
             else if (opc4 == 5) {
                 int aux;
-                cout<<" Ingrese el elemento que desea buscar";
+                cout<<" Ingrese el elemento que desea buscar: ";
                 cin>>aux;
                 cin.ignore();
                 sistema.tree.getCamino(aux);
             }
             else if (opc4 == 6) {
                 int aux;
-                cout<<" Ingrese el elemento que desea eliminar";
+                cout<<" Ingrese el elemento que desea eliminar: ";
                 cin>>aux;
                 cin.ignore();
                 sistema.BtreeDeleteRegistro(aux);

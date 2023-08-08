@@ -193,7 +193,7 @@ class BPlusTree {
         pair<int,int> get(int key) { return findLeaf(key)->get(key); }
 
         pair<int,int> getCamino(int key) { 
-            cout<<"Raiz => ";
+            cout<<"Recorrido:\n\nRaiz => ";
             return findLeafCamino(key)->getPrint(key); 
         }
 
@@ -433,9 +433,9 @@ class BPlusTree {
         void print(Node *node = nullptr, string _prefix = "", bool _last = true) {
             if (!node) node = root;
 
-            string str(1,(char)195);
-            cout << _prefix << str+" [";
-
+            //string str(1,(char)195);
+            //cout << _prefix << str+" [";
+            cout << _prefix << "├ [";
             for (int i = 0; i < node->keys.size(); i++) {
                 cout << node->keys[i];
                 if (i != node->keys.size() - 1) {
@@ -444,8 +444,9 @@ class BPlusTree {
             }
             cout << "]" << endl;
 
-            string str2(1,(char)179);
-            _prefix += _last ? "   " : str2+"  ";
+            _prefix += _last ? "   " : "╎  ";
+            //string str2(1,(char)179);
+            //_prefix += _last ? "   " : str2+"  ";
 
             if (!node->isLeaf) {
                 for (int i = 0; i < node->children.size(); i++) {
